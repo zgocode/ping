@@ -10,23 +10,6 @@ import (
 	"time"
 )
 
-type rTd = time.Duration
-
-type rPing struct {
-	addr    string
-	conn    net.Conn
-	data    []byte
-	timeout time.Duration
-}
-
-type rICMP struct {
-	Type        uint8
-	Code        uint8
-	Checksum    uint16
-	Identifier  uint16
-	SequenceNum uint16
-}
-
 func CheckSum(data []byte) uint16 {
 	var sum uint32
 	var length = len(data)
@@ -43,6 +26,23 @@ func CheckSum(data []byte) uint16 {
 	sum = uint32(uint16(sum>>16) + uint16(sum))
 	sum = uint32(uint16(sum>>16) + uint16(sum))
 	return uint16(^sum)
+}
+
+type rTd = time.Duration
+
+type rICMP struct {
+	Type        uint8
+	Code        uint8
+	Checksum    uint16
+	Identifier  uint16
+	SequenceNum uint16
+}
+
+type rPing struct {
+	addr    string
+	conn    net.Conn
+	data    []byte
+	timeout time.Duration
 }
 
 func New(addr string, size uint, timeout uint) *rPing {
@@ -76,7 +76,7 @@ func (ping *rPing) Size(size uint) {
 }
 
 func (ping *rPing) Address(addr string) {
-	ping.close()
+	ping.Close()
 	ping.addr = addr
 }
 
@@ -92,7 +92,7 @@ func (ping *rPing) connect() error {
 	return nil
 }
 
-func (ping *rPing) close() error {
+func (ping *rPing) Close() error {
 	if ping.conn != nil {
 		ping.conn.Close()
 		ping.conn = nil
@@ -102,7 +102,7 @@ func (ping *rPing) close() error {
 
 func (ping *rPing) handleClosed(rc bool, err error) (rTd, error) {
 	if strings.Index(err.Error(), "closed") >= 0 {
-		ping.close()
+		ping.Close()
 		if rc {
 			return ping.send(false)
 		}
